@@ -5,6 +5,8 @@
     
 """
 import functools
+import math
+import random
 from typing import List, Dict, Optional
 import time
 import inspect
@@ -277,11 +279,25 @@ def test_actual_position(qtbot):
     stat1 = linuxcnc.stat()
     stat1.poll()
 
+    com.mode(linuxcnc.MODE_MANUAL)
+    com.home(-1)
+    com.wait_complete()
+
     com.mode(linuxcnc.MODE_MDI)
     com.mdi("G0 X0Y0Z0")  # TODO Refine this after to more axis
 
     for i in stat.actual_position:
         assert abs(i) < EPS
+
+    spots = [random.randint(0, 10)/10 for i in range(10)]
+
+    for i in spots:
+        qtbot.wait(TEST_TIMEOUT)
+        com.mdi(f"G0 X{i}Y{i}Z-{i}")
+        com.wait_complete()
+        print(i)
+        for j in range(3):
+            assert math.isclose(stat.actual_position[j], i)
 
 #
 # def test_adaptive_feed_enabled(qtbot):

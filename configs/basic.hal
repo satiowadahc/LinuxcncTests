@@ -1,0 +1,5 @@
+
+loadrt [KINS]KINEMATICS
+loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EMCMOT]SERVO_PERIOD
+addf motion-command-handler servo-thread
+addf motion-controller servo-thread

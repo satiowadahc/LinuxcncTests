@@ -1,2 +1,8 @@
 
 .idea/
+
+__pycache__/
+
+*.var
+
+configs/position.txt

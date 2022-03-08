@@ -174,6 +174,8 @@ def test_estop(qtbot):
         qtbot.wait(TEST_TIMEOUT)
         stat1.poll()
         added, removed, modified, same = dict_compare(stat, stat1)
+        print("Changed Values:")
+        print(modified.keys())
         assert len(added) == check[1]
         assert len(removed) == check[2]
         assert len(modified) == check[3]
@@ -195,20 +197,25 @@ def test_machine_enable(qtbot):
     stat1 = linuxcnc.stat()
     stat1.poll()
 
+    # TODO Confusion??
+    #  Lube enables from ESTOP_RESET to STATE_ON Issue #4
+    #  Need to right a test to compare joints
+
     #          COMMAND, ADDED, REMOVED, MODIFIED, TASKSTATE, ESTOP
     groups = [[linuxcnc.STATE_ON, 0, 0, 5, linuxcnc.STATE_ON, 0],
-              [linuxcnc.STATE_OFF, 0, 0, 3, linuxcnc.STATE_OFF, 1],
-              [linuxcnc.STATE_ON, 0, 0, 3, linuxcnc.STATE_ON, 1],
+              [linuxcnc.STATE_OFF, 0, 0, 4, linuxcnc.STATE_ESTOP_RESET, 0],
+              [linuxcnc.STATE_ON, 0, 0, 4, linuxcnc.STATE_ON, 0],
               ]
     for idx, check in enumerate(groups):
         print(f"Commanding {idx}")
-
+        qtbot.wait(TEST_TIMEOUT)
         stat.poll()
         com.state(check[0])
         qtbot.wait(TEST_TIMEOUT)
         stat1.poll()
         added, removed, modified, same = dict_compare(stat, stat1)
-        print(modified)
+        print("Changed Values:")
+        print(modified.keys())
         assert len(added) == check[1]
         assert len(removed) == check[2]
         assert len(modified) == check[3]

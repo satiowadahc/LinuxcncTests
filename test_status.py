@@ -16,9 +16,9 @@ from lcnc import LcncWindow
 
 # Seconds between tests
 TEST_FREQ = 0.01
-TEST_TIMEOUT = 1000
+TEST_TIMEOUT = 250
 JOG_TIMEOUT = 2.0
-MOTION_TIMEOUT = 15.0
+EPS = 0.0001
 
 
 def dict_compare(orig_stat, new_stat) -> [set, set, set, set]:
@@ -120,14 +120,22 @@ def initialize_test(func):
     return wrapper
 
 
-@initialize_test
 def requires_machine_enabled(func):
     """
     Decorator to enable the machine before a test
     :param func:
     :return:
     """
+
+    @functools.wraps(func)
     def wrapper(**kwargs):
+
+        window_test = LcncWindow()
+        window_test.show()
+        kwargs["qtbot"].addWidget(window_test)
+        kwargs["qtbot"].wait(TEST_TIMEOUT)
+        print()  # New line for test printout
+
         t_com = linuxcnc.command()
         t_com.state(linuxcnc.STATE_ESTOP_RESET)
         t_com.state(linuxcnc.STATE_ON)
@@ -136,6 +144,7 @@ def requires_machine_enabled(func):
         func(**kwargs)
 
     return wrapper
+
 
 @initialize_test
 def test_estop(qtbot):
@@ -253,22 +262,27 @@ def test_machine_enable(qtbot):
 #
 #     assert set_estop_ready()
 #     assert set_machine_enabled()
-#
-#
-# def test_actual_position(qtbot):
-#     """
-#
-#     (returns tuple of floats) - current trajectory position, (x y z a b c u v w) in machine units.
-#     """
-#     window_test = LcncWindow()
-#     window_test.show()
-#     qtbot.addWidget(window_test)
-#     qtbot.wait(TEST_TIMEOUT)
-#     print()  # New line for test printout
-#
-#     assert set_estop_ready()
-#     assert set_machine_enabled()
-#
+
+@requires_machine_enabled
+def test_actual_position(qtbot):
+    """
+    (returns tuple of floats) - current trajectory position, (x y z a b c u v w) in machine units.
+    """
+    assert set_estop_ready()
+    assert set_machine_enabled()
+
+    com = linuxcnc.command()
+    stat = linuxcnc.stat()
+    stat.poll()
+    stat1 = linuxcnc.stat()
+    stat1.poll()
+
+    com.mode(linuxcnc.MODE_MDI)
+    com.mdi("G0 X0Y0Z0")  # TODO Refine this after to more axis
+
+    for i in stat.actual_position:
+        assert abs(i) < EPS
+
 #
 # def test_adaptive_feed_enabled(qtbot):
 #     """

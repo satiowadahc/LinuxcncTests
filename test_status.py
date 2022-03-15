@@ -325,21 +325,44 @@ def test_actual_position(qtbot):
 #     assert set_estop_ready()
 #     assert set_machine_enabled()
 #
-#
-# def test_ain(qtbot):
-#     """
-#
-#     (returns tuple of floats) - current value of the analog input pins.
-#     """
-#     window_test = LcncWindow()
-#     window_test.show()
-#     qtbot.addWidget(window_test)
-#     qtbot.wait(TEST_TIMEOUT)
-#     print()  # New line for test printout
-#
-#     assert set_estop_ready()
-#     assert set_machine_enabled()
-#
+
+
+@requires_machine_enabled
+def test_ain(qtbot):
+    """
+
+    (returns tuple of floats) - current value of the analog input pins.
+    """
+
+    get_pins = run(["halcmd", "show", "pin", "motion.analog-in"], capture_output=True, encoding="utf8")
+    num_pins = int(get_pins.stdout.count("motion.analog-in") or 0)
+    shuffle_order = [i for i in range(num_pins)]
+    random.shuffle(shuffle_order)
+    print(shuffle_order)
+
+    stat = linuxcnc.stat()
+    com = linuxcnc.command()
+    stat.poll()
+
+    print("ain", stat.ain)
+    for i in stat.ain:
+        assert i == 0
+
+    for i in shuffle_order:
+        j = str(i).rjust(2,"0")
+        print(f"halcmd setp motion.analog-in-{j}")
+        run(["halcmd", "setp", f"motion.analog-in-{j}", "1"])
+        qtbot.wait(100)
+        stat.poll()
+        print(stat.ain[i])
+        assert stat.ain[i] == 1
+
+        run(["halcmd", "setp", f"motion.analog-in-{j}", "0"])
+        qtbot.wait(100)
+        stat.poll()
+        assert stat.ain[i] == 0
+
+
 #
 # def test_angular_units(qtbot):
 #     """

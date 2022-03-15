@@ -286,11 +286,15 @@ def test_actual_position(qtbot):
 
     com.mode(linuxcnc.MODE_MANUAL)
     com.home(-1)
-    com.wait_complete()
+
+    # TODO need a homing fixture.
+    qtbot.wait(5000)
 
     com.mode(linuxcnc.MODE_MDI)
     com.mdi("G0 X0Y0Z0")  # TODO Refine this after to more axis
 
+    com.wait_complete()
+    stat.poll()
     for i in stat.actual_position:
         assert abs(i) < EPS
 
@@ -301,8 +305,10 @@ def test_actual_position(qtbot):
         com.mdi(f"G0 X{i}Y{i}Z-{i}")
         com.wait_complete()
         print(i)
-        for j in range(3):
-            assert math.isclose(stat.actual_position[j], i)
+        stat.poll()
+        assert math.isclose(stat.actual_position[0], i, abs_tol=EPS)
+        assert math.isclose(stat.actual_position[1], i, abs_tol=EPS)
+        assert math.isclose(stat.actual_position[2], -1 * i, abs_tol=EPS)
 
 #
 # def test_adaptive_feed_enabled(qtbot):

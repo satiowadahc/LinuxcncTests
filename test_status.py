@@ -6,6 +6,7 @@
 """
 import functools
 import math
+import os
 import random
 from typing import List, Dict, Optional
 import time
@@ -14,6 +15,7 @@ import linuxcnc
 import sys
 import traceback
 
+from subprocess import run
 from lcnc import LcncWindow
 
 # Seconds between tests
@@ -22,6 +24,9 @@ TEST_TIMEOUT = 250
 JOG_TIMEOUT = 2.0
 EPS = 0.0001
 
+
+LCNC = os.popen("linuxcnc -l")
+time.sleep(5)
 
 def dict_compare(orig_stat, new_stat) -> [set, set, set, set]:
     """
